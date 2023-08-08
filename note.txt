@@ -1,0 +1,69 @@
+app.post("/post", async (req, res) => {
+  console.log(req.body);
+  const { user, email } = req.body;
+  try {
+    if (user === 1) {
+      res.send({ status: "ok" });
+    } else {
+      res.send({ status: "User Not Found" });
+    }
+  } catch (error) {
+    res.send({ status: "Check the Database" });
+  }
+});
+
+require("./Schema/userDeatils");
+const User = mongo.model("UserInfo");
+
+app.post("/register", async (req, res) => {
+  const { userName, email, phoneNo } = req.body;
+  try {
+    await User.create({
+      userName: userName,
+      email,
+      phoneNo: phoneNo,
+    });
+    res.send({ status: "The data is saved" });
+  } catch (error) {
+    res.send({ status: "Try again sometime" });
+  }
+});
+
+
+app.post('/forgotPass', async (req, res) => {
+  const { email } = req.body;
+  try {
+    const oldUser = await user.findOne({ email });
+    if (!oldUser) {
+      return res.json({ status: 'User Not Exists!!' });
+    }
+    const secret = JWT_SECRET + oldUser.password;
+    const token = jwt.sign({ email: oldUser.email, id: oldUser._id }, secret, {
+      expiresIn: '5m',
+    });
+    const link = `http://localhost:5000/reset-pass/${oldUser._id}/${token}`;
+    var transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: 'gowthamviknesh588@gmail.com',
+        pass: 'tjhnjpcajedjuirk',
+      },
+    });
+
+    var mailOptions = {
+      from: 'gowthamviknesh588@gmail.com',
+      to: email,
+      subject: 'Password Reset',
+      text: link,
+    };
+
+    transporter.sendMail(mailOptions, function (error, info) {
+      if (error) {
+        console.log(error);
+      } else {
+        console.log('Email sent: ' + info.response);
+      }
+    });
+    console.log(link);
+  } catch (error) {}
+});
